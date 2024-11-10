@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef } from "react";
 import Image from "next/image";
-import html2pdf from "html2pdf.js";
+import dynamic from "next/dynamic";
 
 export default function ResumePage() {
     // States for showing different views
@@ -40,27 +40,37 @@ export default function ResumePage() {
         setShowForm(false);
     };
 
-    const handleDownload = () => {
+    const handleDownload = async () => {
         setIsGeneratingPDF(true);
         const element = resumeRef.current;
-        if (element) {
-            html2pdf()
-                .set({
-                    margin: 1,
-                    filename: `${name || "resume"}.pdf`,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2 },
-                    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-                })
-                .from(element)
-                .save()
-                .finally(() => setIsGeneratingPDF(false));
+        
+        try {
+            // Dynamically import html2pdf only when needed
+            const html2pdf = (await import('html2pdf.js')).default;
+            
+            if (element) {
+                await html2pdf()
+                    .set({
+                        margin: 1,
+                        filename: `${name || "resume"}.pdf`,
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2 },
+                        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+                    })
+                    .from(element)
+                    .save();
+            }
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+        } finally {
+            setIsGeneratingPDF(false);
         }
     };
+
     const handleEdit = () => {
-      setIsEditing(!isEditing);
-      if (isEditing) {
-          setShowResume(true);
+        setIsEditing(!isEditing);
+        if (isEditing) {
+            setShowResume(true);;
       }
     };
     
